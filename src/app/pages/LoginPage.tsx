@@ -5,7 +5,7 @@ import { AuthLayout } from '../components/auth/AuthLayout';
 import { FloatingWidgets } from '../components/auth/FloatingWidgets';
 import { InputField } from '../components/auth/InputField';
 import { PrimaryButton } from '../components/auth/PrimaryButton';
-import { Chrome } from 'lucide-react';
+import { Chrome, Home } from 'lucide-react';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -71,6 +71,15 @@ export function LoginPage() {
         transition={{ duration: 0.5 }}
         className="space-y-8"
       >
+        {/* Home Button */}
+        <Link
+          to="/"
+          className="inline-flex items-center space-x-2 text-white/60 hover:text-white transition-colors group"
+        >
+          <Home size={18} className="group-hover:-translate-x-0.5 transition-transform" />
+          <span className="text-sm">Back to Home</span>
+        </Link>
+
         {/* Header */}
         <div className="space-y-2">
           <h1 className="text-4xl font-bold text-white">Welcome back</h1>

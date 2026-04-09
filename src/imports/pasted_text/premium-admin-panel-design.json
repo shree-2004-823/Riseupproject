@@ -1,0 +1,739 @@
+Design a **premium, real-world, startup-quality admin panel** for an AI-powered self-improvement web application.
+
+This admin panel is for managing and monitoring the full platform, including:
+
+* users
+* activity
+* habit systems
+* mood and emotional support signals
+* quit smoking / quit drinking support
+* daily planner usage
+* journal activity
+* progress analytics
+* reminders and automations
+* quotes management
+* AI/chatbot workflow status
+* challenge system
+* content/resources
+* reports and platform health
+
+The admin panel must feel like a **real operations control center**, not just a dashboard with random charts.
+
+The design should be:
+
+* modern
+* premium
+* secure
+* highly functional
+* implementation-ready
+* focused on workflows and support actions
+
+Use a dark premium interface with:
+
+* deep charcoal / near-black backgrounds
+* layered cards
+* electric blue, violet, emerald, subtle amber accents
+* rounded 2xl cards
+* soft shadows
+* minimal glassmorphism only for overlays/modals
+* modern typography
+* clean tables, filters, status badges, and alert panels
+
+---
+
+# 1. ADMIN ACCESS & AUTHENTICATION FLOW
+
+Design a **separate secure admin authentication flow**.
+
+This should not feel like a normal user login page.
+
+## Admin access concept
+
+Use a dedicated **Admin Access Portal** with a premium secure look.
+
+### Admin login flow
+
+1. Admin opens `/admin/login`
+2. Enters:
+
+   * admin email
+   * password
+3. System checks if account has admin role
+4. Require second verification step:
+
+   * OTP code
+   * or authenticator app code
+5. If verified, allow access to admin panel
+6. If not verified, deny access
+
+## Security UX features
+
+Design UI for:
+
+* role-based access notice
+* two-step verification input
+* trusted device checkbox optional
+* suspicious login warning
+* login attempt failed state
+* access denied state for non-admin users
+
+## Extra secure ideas to reflect in design
+
+* invite-only admin accounts
+* approved email domain / allowlist
+* last login info
+* admin session timeout warning
+* audit log access badge
+* secure access messaging such as:
+  “Restricted system access. Authorized administrators only.”
+
+## Important design rule
+
+Do not design admin access as:
+
+* hidden secret route only
+* one password screen only
+* gimmicky hacker-style login
+* security through obscurity
+
+It should look like a serious admin access system.
+
+---
+
+# 2. ADMIN PANEL APP SHELL
+
+Design a full admin app layout.
+
+## Left Sidebar
+
+Include:
+
+* Overview
+* Users
+* User Support
+* Habits
+* Mood Risk
+* Quit Support
+* Planner
+* Quotes
+* AI Control
+* Reminders
+* Challenges
+* Content Library
+* Reports
+* Audit Logs
+* Settings
+
+### Sidebar behavior
+
+* collapsible
+* active highlight
+* status indicator for critical alerts
+* sticky
+* smooth hover transitions
+
+## Top Header
+
+Include:
+
+* current page title
+* system status badge
+* active alerts count
+* search bar
+* notifications
+* admin avatar
+* role badge
+* quick action button
+* logout
+
+---
+
+# 3. ADMIN OVERVIEW DASHBOARD
+
+This is the main control center.
+
+## Top KPI cards
+
+Show:
+
+* total users
+* active users today
+* new users this week
+* habits completed today
+* mood check-ins today
+* cravings logged today
+* journals submitted today
+* AI chats today
+* reminder success rate
+* active challenges count
+
+## Platform health widgets
+
+Include:
+
+* system health
+* AI workflow health
+* reminder delivery health
+* quote rotation health
+* admin alerts
+
+## High-priority support widgets
+
+Show:
+
+* users inactive for 3+ days
+* users with repeated low mood
+* users with recent relapse logs
+* users with multiple cravings today
+* onboarding drop-offs
+* failed automation runs
+
+## Trend charts
+
+Include:
+
+* daily active users
+* habit completion trend
+* mood check-in trend
+* craving trend
+* challenge participation trend
+
+## Quick admin actions
+
+Buttons:
+
+* Add Quote
+* Create Challenge
+* Send Support Notification
+* Review Flagged Users
+* Retry Failed Workflow
+* Add Resource
+
+---
+
+# 4. USER MANAGEMENT PAGE
+
+Design a functional admin user table.
+
+## Table columns
+
+* user name
+* email
+* joined date
+* onboarding status
+* last active
+* current streak
+* mood risk status
+* quit support status
+* account status
+* planner mode
+
+## Filters
+
+* active users
+* inactive users
+* onboarding incomplete
+* low mood risk
+* relapse risk
+* high consistency
+* challenge participants
+
+## Row actions
+
+* view profile
+* suspend account
+* reset onboarding
+* assign challenge
+* send support prompt
+* add admin note
+* export summary
+
+## Functional design requirements
+
+Make it clear how admin can:
+
+* search users
+* filter users
+* bulk select users
+* apply actions
+* open user detail drawer/page
+
+---
+
+# 5. USER DETAIL / SUPPORT PROFILE
+
+Design a deep admin view for one user.
+
+## Show sections for:
+
+* basic profile
+* selected goals
+* habits
+* streaks
+* mood history
+* craving history
+* planner usage
+* journal activity
+* challenge participation
+* reminder settings
+* AI interaction history summary
+
+## Show risk/support tags
+
+Examples:
+
+* low activity
+* repeated low mood
+* relapse risk
+* planner overload
+* missed habits trend
+* no mood check-ins
+* recovery mode recommended
+
+## Admin actions
+
+* send gentle support message
+* assign challenge
+* trigger reminder
+* recommend low energy mode
+* recommend recovery mode
+* add internal note
+* flag for follow-up
+* export user report
+
+---
+
+# 6. HABIT TEMPLATE MANAGEMENT
+
+Design an admin page for managing app-level habit templates.
+
+## Admin can:
+
+* add template
+* edit template
+* archive template
+* assign category
+* set default frequency
+* set reminder suggestion
+* define minimum version
+* define difficulty level
+* define recommended goal pack
+
+## Example template packs
+
+* beginner fitness pack
+* quit smoking starter pack
+* emotional reset pack
+* discipline reboot pack
+* sleep recovery pack
+
+## Functional UI
+
+Show:
+
+* template table/grid
+* category filters
+* status badges
+* pack assignment
+* preview drawer
+
+---
+
+# 7. MOOD RISK MONITORING PAGE
+
+Design a support-focused monitoring page.
+
+## Show:
+
+* users with repeated low mood
+* users with stress spikes
+* users with no recent mood check-in
+* users with sudden emotional drop
+* correlation between mood and activity decline
+
+## Risk labels
+
+* low mood trend
+* stress spike
+* burnout risk
+* low engagement
+* craving-related mood decline
+
+## Admin actions
+
+* send support reminder
+* assign calm challenge
+* recommend planner downshift
+* queue supportive AI outreach
+* attach internal follow-up note
+
+Important:
+This page should feel supportive and ethical, not clinical or invasive.
+
+---
+
+# 8. QUIT SUPPORT MONITORING PAGE
+
+Design a real operational page for quit smoking / alcohol recovery oversight.
+
+## Top stats
+
+* users in quit program
+* cravings logged today
+* relapse count this week
+* urges resisted
+* most common triggers
+* most risky time of day
+
+## Charts / views
+
+* cravings by hour
+* top trigger categories
+* relapse pattern trend
+* emergency support usage
+
+## User list
+
+Show users with:
+
+* high cravings
+* recent relapse
+* emergency support usage
+* strong streak milestones
+
+## Admin actions
+
+* assign recovery challenge
+* trigger comeback message
+* recommend content pack
+* update replacement strategy resources
+* review high-risk users
+
+---
+
+# 9. DAILY PLANNER OPERATIONS PAGE
+
+Design an admin page to understand planner usage.
+
+## Show:
+
+* most used planner mode
+* average task completion
+* carry-forward rate
+* most skipped time block
+* best-performing time block
+* overloaded planner warnings
+
+## Admin actions
+
+* create planner templates
+* edit planner templates
+* publish “school day” template
+* publish “recovery day” template
+* publish “comeback day” template
+* tune task difficulty defaults
+
+---
+
+# 10. QUOTES MANAGEMENT PAGE
+
+Design a full admin page for quote system control.
+
+## Purpose
+
+Manage the dashboard quote system that rotates every 5 minutes.
+
+## Admin actions
+
+* add quote
+* edit quote
+* delete quote
+* activate/deactivate quote
+* assign category
+* assign author
+* preview quote display
+* reorder or schedule rotation logic
+
+## Categories
+
+* motivation
+* discipline
+* calm
+* recovery
+* comeback
+* focus
+
+## Functional requirements
+
+Make it clear how admin can:
+
+* review quote list
+* filter by category
+* preview current active quote
+* see quote usage stats
+* check if quote rotation system is healthy
+
+---
+
+# 11. AI CONTROL PANEL
+
+Design an admin page for AI and chatbot oversight.
+
+## Show:
+
+* AI chats today
+* most used prompt types
+* failed AI responses
+* average response time
+* workflow health
+* urgent support requests
+* mood-support requests
+* craving-help requests
+* planner-help requests
+
+## Admin controls
+
+* edit prompt chips
+* enable/disable AI modes
+* review fallback responses
+* monitor webhook status
+* retry failed requests
+* view flagged urgent conversations
+
+Important:
+This should clearly look ready to connect to n8n workflows later.
+
+---
+
+# 12. REMINDERS & AUTOMATIONS PAGE
+
+Design a workflow management page.
+
+## Show reminder categories
+
+* wake-up reminders
+* workout reminders
+* mood reminders
+* journal reminders
+* quit-support reminders
+* streak celebration reminders
+* weekly summaries
+
+## Show automation cards
+
+* inactive user comeback flow
+* low mood support flow
+* craving emergency support flow
+* missed journal gentle reminder
+* streak celebration flow
+
+## Functional controls
+
+* enable/disable workflow
+* edit rule
+* test flow
+* pause flow
+* see success rate
+* see last run
+* see failed runs
+
+---
+
+# 13. CHALLENGES MANAGEMENT PAGE
+
+Design challenge operations UI.
+
+## Admin can:
+
+* create challenge
+* edit challenge
+* archive challenge
+* set duration
+* set reward badge
+* set target group
+* assign challenge to users
+* view participation
+
+## Example challenges
+
+* 7 Days No Smoking
+* 14 Day Workout Reset
+* 7 Day Mood Check-In
+* 21 Day Journal Streak
+* 10 Day Recovery Reset
+
+## Show metrics
+
+* active participants
+* completion rate
+* drop-off rate
+* challenge success trend
+
+---
+
+# 14. CONTENT LIBRARY PAGE
+
+Design a content/resources admin page.
+
+## Admin can manage:
+
+* motivational cards
+* breathing exercises
+* anti-craving guides
+* planner templates
+* sleep tips
+* emotional reset tips
+* recovery support resources
+* emergency support content
+
+## Functional requirements
+
+Make it clear how content can be:
+
+* added
+* edited
+* tagged
+* activated/deactivated
+* linked to support workflows
+
+---
+
+# 15. REPORTS PAGE
+
+Design a reporting and exports page.
+
+## Reports to generate
+
+* weekly platform activity
+* user engagement summary
+* habit completion trends
+* mood trend summary
+* quit support summary
+* reminder effectiveness
+* AI usage summary
+* challenge completion report
+
+## Export options
+
+* CSV
+* PDF summary
+* print-friendly report
+
+---
+
+# 16. AUDIT LOGS PAGE
+
+Design a secure admin audit trail page.
+
+## Show:
+
+* admin login attempts
+* admin actions
+* workflow edits
+* quote edits
+* reminder changes
+* challenge assignments
+* user account changes
+
+## Table fields
+
+* timestamp
+* admin name
+* action type
+* affected object
+* status
+* details preview
+
+This page should reinforce that the admin system is serious and secure.
+
+---
+
+# 17. REAL-LIFE ADMIN WORKFLOWS TO REFLECT IN UI
+
+Design the admin panel to support real workflows such as:
+
+## Workflow 1: Inactive user recovery
+
+If user inactive for 3 days:
+
+* show support flag
+* allow admin to trigger comeback notification
+* recommend easier planner mode
+* assign recovery challenge
+
+## Workflow 2: Low mood support
+
+If repeated low mood logs:
+
+* show risk flag
+* suggest gentle outreach
+* recommend calm resources
+* queue supportive AI sequence
+
+## Workflow 3: Quit-support risk monitoring
+
+If many cravings are logged:
+
+* highlight user
+* suggest emergency support flow
+* allow admin to assign recovery pack
+
+## Workflow 4: Broken streak recovery
+
+If major streak breaks:
+
+* show comeback candidate
+* assign comeback challenge
+* trigger supportive dashboard mode
+
+## Workflow 5: Workflow failure monitoring
+
+If AI or reminders fail:
+
+* show failure alert
+* allow retry
+* display last success and error state
+
+---
+
+# 18. STATES TO DESIGN
+
+For all major admin screens, include:
+
+* default
+* loading
+* success
+* error
+* empty
+* warning
+* high-risk alert
+* healthy system state
+
+---
+
+# 19. RESPONSIVENESS
+
+Design primarily for desktop admin usage, but also include:
+
+* tablet-friendly layout
+* compact mobile-safe fallback for overview and alerts
+
+---
+
+# 20. FINAL DESIGN GOAL
+
+Create a **real, secure, premium, workflow-driven admin control center** for a self-improvement platform.
+
+It should help administrators:
+
+* monitor platform health
+* manage users and templates
+* support struggling users
+* supervise quit-support flows
+* control quote rotation
+* manage reminders and automations
+* oversee AI workflows
+* run challenges and resources
+* keep secure audit visibility
+
+The admin panel should feel like a serious SaaS operations product, not a generic analytics dashboard.

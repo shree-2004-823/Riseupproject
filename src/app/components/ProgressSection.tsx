@@ -1,37 +1,17 @@
 import { motion } from 'motion/react';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Brain } from 'lucide-react';
-
-const weeklyData = [
-  { day: 'Mon', habits: 4, id: 'mon' },
-  { day: 'Tue', habits: 5, id: 'tue' },
-  { day: 'Wed', habits: 3, id: 'wed' },
-  { day: 'Thu', habits: 5, id: 'thu' },
-  { day: 'Fri', habits: 4, id: 'fri' },
-  { day: 'Sat', habits: 5, id: 'sat' },
-  { day: 'Sun', habits: 4, id: 'sun' },
-];
-
-const moodData = [
-  { day: 'Mon', mood: 7, id: 'mood-mon' },
-  { day: 'Tue', mood: 6, id: 'mood-tue' },
-  { day: 'Wed', mood: 8, id: 'mood-wed' },
-  { day: 'Thu', mood: 7, id: 'mood-thu' },
-  { day: 'Fri', mood: 9, id: 'mood-fri' },
-  { day: 'Sat', mood: 8, id: 'mood-sat' },
-  { day: 'Sun', mood: 8, id: 'mood-sun' },
-];
+import { useNavigate } from 'react-router';
+import { WeeklyHabitsChart } from './WeeklyHabitsChart';
+import { MoodTrendChart } from './MoodTrendChart';
 
 export function ProgressSection() {
+  const navigate = useNavigate();
+
   return (
     <section id="progress" className="relative py-32 bg-gradient-to-b from-zinc-900 to-zinc-950">
-      {/* SVG Definitions for all gradients - defined once at top level */}
+      {/* SVG Definitions for gradients */}
       <svg width="0" height="0" style={{ position: 'absolute' }}>
         <defs>
-          <linearGradient id="barChartGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#3b82f6" />
-            <stop offset="100%" stopColor="#8b5cf6" />
-          </linearGradient>
           <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#10b981" />
             <stop offset="100%" stopColor="#3b82f6" />
@@ -62,6 +42,7 @@ export function ProgressSection() {
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Weekly Habit Completion Chart */}
           <motion.div
+            key="weekly-habits-card"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -72,31 +53,12 @@ export function ProgressSection() {
               <h3 className="text-2xl font-bold text-white mb-2">Weekly Habit Completion</h3>
               <p className="text-white/60 text-sm">Your consistency this week</p>
             </div>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={weeklyData} id="weekly-habits-chart">
-                <XAxis dataKey="day" stroke="rgba(255,255,255,0.5)" key="bar-xaxis" />
-                <YAxis stroke="rgba(255,255,255,0.5)" key="bar-yaxis" />
-                <Tooltip
-                  key="bar-tooltip"
-                  contentStyle={{
-                    backgroundColor: 'rgba(24, 24, 27, 0.95)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '12px',
-                    color: 'white',
-                  }}
-                />
-                <Bar
-                  key="bar-habits"
-                  dataKey="habits"
-                  fill="url(#barChartGradient)"
-                  radius={[8, 8, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+            <WeeklyHabitsChart />
           </motion.div>
 
           {/* Mood Trend Chart */}
           <motion.div
+            key="mood-trend-card"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -107,34 +69,12 @@ export function ProgressSection() {
               <h3 className="text-2xl font-bold text-white mb-2">Mood Trend</h3>
               <p className="text-white/60 text-sm">Your emotional journey</p>
             </div>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={moodData} id="mood-trend-chart">
-                <XAxis dataKey="day" stroke="rgba(255,255,255,0.5)" key="line-xaxis" />
-                <YAxis stroke="rgba(255,255,255,0.5)" domain={[0, 10]} key="line-yaxis" />
-                <Tooltip
-                  key="line-tooltip"
-                  contentStyle={{
-                    backgroundColor: 'rgba(24, 24, 27, 0.95)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '12px',
-                    color: 'white',
-                  }}
-                />
-                <Line
-                  key="line-mood"
-                  type="monotone"
-                  dataKey="mood"
-                  stroke="#8b5cf6"
-                  strokeWidth={3}
-                  dot={{ fill: '#8b5cf6', r: 5 }}
-                  activeDot={{ r: 7 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <MoodTrendChart />
           </motion.div>
 
           {/* Circular Progress - Consistency Score */}
           <motion.div
+            key="consistency-score-card"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -237,6 +177,7 @@ export function ProgressSection() {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
+                  onClick={() => navigate('/login')}
                   className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-violet-500 to-purple-500 text-white font-bold shadow-lg hover:shadow-xl transition-shadow"
                 >
                   Get More Insights
