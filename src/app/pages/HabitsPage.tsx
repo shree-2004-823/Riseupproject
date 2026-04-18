@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AppLayout } from '../components/layout/AppLayout';
 import {
@@ -11,81 +11,21 @@ import {
   Edit,
   Trash2,
   Check,
-  X,
   TrendingUp,
   Award,
+  X,
 } from 'lucide-react';
+import { apiFetch, ApiError } from '@/lib/api';
+import type { Habit, HabitsResponse } from '@/lib/types';
 
-interface Habit {
-  id: string;
-  name: string;
-  category: 'physical' | 'mental' | 'emotional' | 'discipline' | 'recovery';
-  completed: boolean;
-  streak: number;
-  frequency: string;
-  difficulty: 'easy' | 'medium' | 'hard';
-  time?: string;
-}
-
-const mockHabits: Habit[] = [
-  {
-    id: '1',
-    name: 'Morning Run',
-    category: 'physical',
-    completed: true,
-    streak: 7,
-    frequency: 'Daily',
-    difficulty: 'medium',
-    time: '6:00 AM',
-  },
-  {
-    id: '2',
-    name: 'Drink 3L Water',
-    category: 'physical',
-    completed: true,
-    streak: 14,
-    frequency: 'Daily',
-    difficulty: 'easy',
-  },
-  {
-    id: '3',
-    name: 'No Smoking',
-    category: 'recovery',
-    completed: false,
-    streak: 14,
-    frequency: 'Daily',
-    difficulty: 'hard',
-  },
-  {
-    id: '4',
-    name: 'Meditation 10 min',
-    category: 'mental',
-    completed: false,
-    streak: 5,
-    frequency: 'Daily',
-    difficulty: 'medium',
-    time: '7:00 AM',
-  },
-  {
-    id: '5',
-    name: 'Journal Entry',
-    category: 'emotional',
-    completed: false,
-    streak: 14,
-    frequency: 'Daily',
-    difficulty: 'easy',
-    time: '9:00 PM',
-  },
-  {
-    id: '6',
-    name: 'Read 20 pages',
-    category: 'mental',
-    completed: false,
-    streak: 3,
-    frequency: 'Daily',
-    difficulty: 'medium',
-  },
-];
+const emptyHabitForm = {
+  name: '',
+  category: 'physical',
+  difficulty: 'medium',
+  frequency: 'Daily',
+  scheduledTime: '',
+  fallbackTask: '',
+};
 
 const categoryColors = {
   physical: { bg: 'from-orange-500/20', border: 'border-orange-500/30', text: 'text-orange-400' },
@@ -96,33 +36,140 @@ const categoryColors = {
 };
 
 export function HabitsPage() {
-  const [habits, setHabits] = useState(mockHabits);
   const [filter, setFilter] = useState<string>('all');
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [showHabitModal, setShowHabitModal] = useState(false);
+  const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
+  const [form, setForm] = useState(emptyHabitForm);
+  const [data, setData] = useState<HabitsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
-  const completedCount = habits.filter((h) => h.completed).length;
-  const totalCount = habits.length;
-  const completionPercentage = (completedCount / totalCount) * 100;
+  useEffect(() => {
+    void loadHabits();
+  }, []);
 
-  const toggleHabit = (id: string) => {
-    setHabits(
-      habits.map((h) => (h.id === id ? { ...h, completed: !h.completed } : h))
-    );
+  async function loadHabits() {
+    setError('');
+
+    try {
+      const response = await apiFetch<HabitsResponse>('/habits');
+      setData(response);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setError(error.message);
+      } else {
+        setError('Unable to load habits right now');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function openCreateModal() {
+    setEditingHabit(null);
+    setForm(emptyHabitForm);
+    setShowHabitModal(true);
+  }
+
+  function openEditModal(habit: Habit) {
+    setEditingHabit(habit);
+    setForm({
+      name: habit.name,
+      category: habit.category,
+      difficulty: habit.difficulty,
+      frequency: habit.frequency,
+      scheduledTime: habit.time ?? '',
+      fallbackTask: habit.fallbackTask ?? '',
+    });
+    setShowHabitModal(true);
+  }
+
+  async function handleSubmitHabit(event: React.FormEvent) {
+    event.preventDefault();
+    setSaving(true);
+    setError('');
+
+    try {
+      if (editingHabit) {
+        await apiFetch(`/habits/${editingHabit.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(form),
+        });
+      } else {
+        await apiFetch('/habits', {
+          method: 'POST',
+          body: JSON.stringify(form),
+        });
+      }
+
+      setShowHabitModal(false);
+      setEditingHabit(null);
+      setForm(emptyHabitForm);
+      await loadHabits();
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setError(error.message);
+      } else {
+        setError('Unable to save this habit right now');
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleToggleHabit(habitId: string) {
+    try {
+      await apiFetch(`/habits/${habitId}/log`, {
+        method: 'POST',
+        body: JSON.stringify({}),
+      });
+      await loadHabits();
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setError(error.message);
+      } else {
+        setError('Unable to update this habit right now');
+      }
+    }
+  }
+
+  async function handleDeleteHabit(habitId: string) {
+    try {
+      await apiFetch(`/habits/${habitId}`, {
+        method: 'DELETE',
+      });
+      await loadHabits();
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setError(error.message);
+      } else {
+        setError('Unable to delete this habit right now');
+      }
+    }
+  }
+
+  const habits = data?.habits ?? [];
+  const filteredHabits = habits.filter((habit) => filter === 'all' || habit.category === filter);
+  const stats = data?.stats ?? {
+    completedCount: 0,
+    totalCount: 0,
+    completionPercentage: 0,
+    longestStreak: 0,
+    activeCount: 0,
+    weekRate: 0,
   };
 
   return (
     <AppLayout>
       <div className="space-y-6 max-w-7xl mx-auto">
-        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold mb-2">Habits</h1>
-            <p className="text-white/60">
-              Build consistency, one day at a time
-            </p>
+            <p className="text-white/60">Build consistency, one day at a time</p>
           </div>
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={openCreateModal}
             className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600 rounded-xl transition-all shadow-lg hover:shadow-blue-500/25"
           >
             <Plus size={20} />
@@ -130,7 +177,12 @@ export function HabitsPage() {
           </button>
         </div>
 
-        {/* Stats Summary */}
+        {error && (
+          <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-4 text-sm text-red-200">
+            {error}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <motion.div
             whileHover={{ scale: 1.02 }}
@@ -138,13 +190,15 @@ export function HabitsPage() {
           >
             <div className="flex items-center justify-between mb-2">
               <Target size={24} className="text-blue-400" />
-              <span className="text-3xl font-bold">{completedCount}/{totalCount}</span>
+              <span className="text-3xl font-bold">
+                {stats.completedCount}/{stats.totalCount}
+              </span>
             </div>
             <p className="text-white/60 text-sm">Today's Progress</p>
             <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden mt-3">
               <div
                 className="h-full bg-gradient-to-r from-blue-500 to-violet-500 rounded-full transition-all duration-500"
-                style={{ width: `${completionPercentage}%` }}
+                style={{ width: `${stats.completionPercentage}%` }}
               />
             </div>
           </motion.div>
@@ -155,7 +209,7 @@ export function HabitsPage() {
           >
             <div className="flex items-center justify-between mb-2">
               <Flame size={24} className="text-orange-400" />
-              <span className="text-3xl font-bold">14</span>
+              <span className="text-3xl font-bold">{stats.longestStreak}</span>
             </div>
             <p className="text-white/60 text-sm">Longest Streak</p>
           </motion.div>
@@ -166,7 +220,7 @@ export function HabitsPage() {
           >
             <div className="flex items-center justify-between mb-2">
               <Calendar size={24} className="text-emerald-400" />
-              <span className="text-3xl font-bold">6</span>
+              <span className="text-3xl font-bold">{stats.activeCount}</span>
             </div>
             <p className="text-white/60 text-sm">Active Habits</p>
           </motion.div>
@@ -177,35 +231,34 @@ export function HabitsPage() {
           >
             <div className="flex items-center justify-between mb-2">
               <TrendingUp size={24} className="text-violet-400" />
-              <span className="text-3xl font-bold">87%</span>
+              <span className="text-3xl font-bold">{stats.weekRate}%</span>
             </div>
             <p className="text-white/60 text-sm">This Week</p>
           </motion.div>
         </div>
 
-        {/* Filters */}
         <div className="flex items-center space-x-2 overflow-x-auto pb-2">
           <Filter size={18} className="text-white/60 flex-shrink-0" />
-          {['all', 'physical', 'mental', 'emotional', 'discipline', 'recovery'].map((f) => (
+          {['all', 'physical', 'mental', 'emotional', 'discipline', 'recovery'].map((nextFilter) => (
             <button
-              key={f}
-              onClick={() => setFilter(f)}
+              key={nextFilter}
+              onClick={() => setFilter(nextFilter)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex-shrink-0 ${
-                filter === f
+                filter === nextFilter
                   ? 'bg-gradient-to-r from-blue-500/20 to-violet-500/20 text-white border border-blue-500/30'
                   : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10'
               }`}
             >
-              {f.charAt(0).toUpperCase() + f.slice(1)}
+              {nextFilter.charAt(0).toUpperCase() + nextFilter.slice(1)}
             </button>
           ))}
         </div>
 
-        {/* Habits List */}
-        <div className="space-y-3">
-          {habits
-            .filter((h) => filter === 'all' || h.category === filter)
-            .map((habit, index) => (
+        {loading ? (
+          <div className="text-center py-16 text-white/70">Loading habits...</div>
+        ) : (
+          <div className="space-y-3">
+            {filteredHabits.map((habit, index) => (
               <motion.div
                 key={habit.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -218,11 +271,9 @@ export function HabitsPage() {
                 }`}
               >
                 <div className="flex items-center justify-between gap-4">
-                  {/* Left Section */}
                   <div className="flex items-center space-x-4 flex-1">
-                    {/* Toggle Button */}
                     <button
-                      onClick={() => toggleHabit(habit.id)}
+                      onClick={() => void handleToggleHabit(habit.id)}
                       className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${
                         habit.completed
                           ? 'bg-emerald-500 border-emerald-500 shadow-lg shadow-emerald-500/25'
@@ -232,7 +283,6 @@ export function HabitsPage() {
                       {habit.completed && <Check size={16} className="text-white" />}
                     </button>
 
-                    {/* Habit Info */}
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
                         <h3
@@ -244,9 +294,11 @@ export function HabitsPage() {
                         </h3>
                         <span
                           className={`px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r ${
-                            categoryColors[habit.category].bg
-                          } ${categoryColors[habit.category].text} ${
-                            categoryColors[habit.category].border
+                            categoryColors[habit.category as keyof typeof categoryColors].bg
+                          } ${
+                            categoryColors[habit.category as keyof typeof categoryColors].text
+                          } ${
+                            categoryColors[habit.category as keyof typeof categoryColors].border
                           } border`}
                         >
                           {habit.category}
@@ -282,21 +334,32 @@ export function HabitsPage() {
                     </div>
                   </div>
 
-                  {/* Actions */}
                   <div className="flex items-center space-x-2">
-                    <button className="p-2 rounded-lg hover:bg-white/5 transition-colors text-white/60 hover:text-white">
+                    <button
+                      onClick={() => openEditModal(habit)}
+                      className="p-2 rounded-lg hover:bg-white/5 transition-colors text-white/60 hover:text-white"
+                    >
                       <Edit size={18} />
                     </button>
-                    <button className="p-2 rounded-lg hover:bg-white/5 transition-colors text-white/60 hover:text-red-400">
+                    <button
+                      onClick={() => void handleDeleteHabit(habit.id)}
+                      className="p-2 rounded-lg hover:bg-white/5 transition-colors text-white/60 hover:text-red-400"
+                    >
                       <Trash2 size={18} />
                     </button>
                   </div>
                 </div>
               </motion.div>
             ))}
-        </div>
 
-        {/* Weekly Streak View */}
+            {filteredHabits.length === 0 && (
+              <div className="rounded-2xl border border-white/10 bg-zinc-900/40 px-6 py-12 text-center text-white/60">
+                No habits match this filter yet.
+              </div>
+            )}
+          </div>
+        )}
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -307,29 +370,149 @@ export function HabitsPage() {
             <Award size={20} className="text-yellow-400" />
           </div>
           <div className="grid grid-cols-7 gap-2">
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => {
-              const completed = index < 4;
-              return (
-                <div key={day} className="text-center">
-                  <p className="text-xs text-white/60 mb-2">{day}</p>
-                  <div
-                    className={`w-full aspect-square rounded-lg flex items-center justify-center ${
-                      completed
-                        ? 'bg-gradient-to-br from-emerald-500 to-green-500'
-                        : index === 4
-                        ? 'bg-gradient-to-br from-blue-500 to-violet-500 ring-2 ring-blue-400'
-                        : 'bg-white/5'
-                    }`}
-                  >
-                    {completed && <Check size={18} className="text-white" />}
-                    {index === 4 && <Target size={18} className="text-white" />}
-                  </div>
+            {(data?.week ?? []).map((day, index) => (
+              <div key={day.label} className="text-center">
+                <p className="text-xs text-white/60 mb-2">{day.label}</p>
+                <div
+                  className={`w-full aspect-square rounded-lg flex items-center justify-center ${
+                    day.completed
+                      ? 'bg-gradient-to-br from-emerald-500 to-green-500'
+                      : index === 6
+                      ? 'bg-gradient-to-br from-blue-500 to-violet-500 ring-2 ring-blue-400'
+                      : 'bg-white/5'
+                  }`}
+                >
+                  {day.completed && <Check size={18} className="text-white" />}
+                  {!day.completed && index === 6 && <Target size={18} className="text-white" />}
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </motion.div>
       </div>
+
+      <AnimatePresence>
+        {showHabitModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.form
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              onSubmit={handleSubmitHabit}
+              className="w-full max-w-xl rounded-3xl border border-white/10 bg-zinc-950/95 p-6 space-y-5"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-semibold">
+                    {editingHabit ? 'Edit Habit' : 'Add Habit'}
+                  </h3>
+                  <p className="text-white/60 text-sm">Keep the existing structure. Just make it yours.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowHabitModal(false)}
+                  className="rounded-full p-2 hover:bg-white/5"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <label className="space-y-2">
+                  <span className="text-sm text-white/70">Habit name</span>
+                  <input
+                    value={form.name}
+                    onChange={(event) => setForm({ ...form, name: event.target.value })}
+                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 outline-none focus:border-blue-500/50"
+                    placeholder="Morning walk"
+                    required
+                  />
+                </label>
+
+                <label className="space-y-2">
+                  <span className="text-sm text-white/70">Category</span>
+                  <select
+                    value={form.category}
+                    onChange={(event) => setForm({ ...form, category: event.target.value })}
+                    className="w-full rounded-xl border border-white/10 bg-zinc-950 px-4 py-3 outline-none focus:border-blue-500/50"
+                  >
+                    <option value="physical">Physical</option>
+                    <option value="mental">Mental</option>
+                    <option value="emotional">Emotional</option>
+                    <option value="discipline">Discipline</option>
+                    <option value="recovery">Recovery</option>
+                  </select>
+                </label>
+
+                <label className="space-y-2">
+                  <span className="text-sm text-white/70">Difficulty</span>
+                  <select
+                    value={form.difficulty}
+                    onChange={(event) => setForm({ ...form, difficulty: event.target.value })}
+                    className="w-full rounded-xl border border-white/10 bg-zinc-950 px-4 py-3 outline-none focus:border-blue-500/50"
+                  >
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                  </select>
+                </label>
+
+                <label className="space-y-2">
+                  <span className="text-sm text-white/70">Frequency</span>
+                  <input
+                    value={form.frequency}
+                    onChange={(event) => setForm({ ...form, frequency: event.target.value })}
+                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 outline-none focus:border-blue-500/50"
+                    placeholder="Daily"
+                  />
+                </label>
+
+                <label className="space-y-2">
+                  <span className="text-sm text-white/70">Time</span>
+                  <input
+                    type="time"
+                    value={form.scheduledTime}
+                    onChange={(event) => setForm({ ...form, scheduledTime: event.target.value })}
+                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 outline-none focus:border-blue-500/50"
+                  />
+                </label>
+
+                <label className="space-y-2">
+                  <span className="text-sm text-white/70">Fallback task</span>
+                  <input
+                    value={form.fallbackTask}
+                    onChange={(event) => setForm({ ...form, fallbackTask: event.target.value })}
+                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 outline-none focus:border-blue-500/50"
+                    placeholder="5 minute stretch"
+                  />
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowHabitModal(false)}
+                  className="px-5 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="px-5 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600 transition-colors disabled:opacity-60"
+                >
+                  {saving ? 'Saving...' : editingHabit ? 'Save Changes' : 'Create Habit'}
+                </button>
+              </div>
+            </motion.form>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </AppLayout>
   );
 }

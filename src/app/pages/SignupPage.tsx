@@ -6,23 +6,30 @@ import { FloatingWidgets } from '../components/auth/FloatingWidgets';
 import { InputField } from '../components/auth/InputField';
 import { PasswordStrengthMeter } from '../components/auth/PasswordStrengthMeter';
 import { PrimaryButton } from '../components/auth/PrimaryButton';
-import { Chrome, Home } from 'lucide-react';
+import { Home } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
+import { ApiError } from '@/lib/api';
 
 export function SignupPage() {
   const navigate = useNavigate();
+  const { signup } = useAuth();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
+    username: '',
     password: '',
     confirmPassword: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState('');
 
   const validateEmail = (email: string) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);
   };
+
+  const validateUsername = (username: string) => /^[a-zA-Z0-9._-]{3,24}$/.test(username);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -35,6 +42,12 @@ export function SignupPage() {
       newErrors.email = 'Email is required';
     } else if (!validateEmail(formData.email)) {
       newErrors.email = 'Please enter a valid email';
+    }
+
+    if (!formData.username.trim()) {
+      newErrors.username = 'Username is required';
+    } else if (!validateUsername(formData.username)) {
+      newErrors.username = 'Use 3 to 24 letters, numbers, dots, underscores, or hyphens';
     }
 
     if (!formData.password) {
@@ -53,27 +66,36 @@ export function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setServerError('');
 
     if (!validateForm()) return;
 
     setLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      // Redirect to onboarding
-      navigate('/onboarding');
-    }, 1500);
-  };
+    try {
+      await signup({
+        fullName: formData.fullName,
+        email: formData.email,
+        username: formData.username,
+        password: formData.password,
+      });
 
-  const handleGoogleSignup = () => {
-    // Simulate Google OAuth
-    console.log('Google signup clicked');
+      navigate('/onboarding');
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setServerError(error.message);
+      } else {
+        setServerError('Unable to create your account right now');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const isFormValid =
     formData.fullName.trim() &&
     formData.email.trim() &&
+    formData.username.trim() &&
     formData.password.length >= 8 &&
     formData.password === formData.confirmPassword;
 
@@ -104,6 +126,12 @@ export function SignupPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
+          {serverError && (
+            <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+              {serverError}
+            </div>
+          )}
+
           <InputField
             label="Full Name"
             placeholder="Enter your full name"
@@ -120,6 +148,15 @@ export function SignupPage() {
             value={formData.email}
             onChange={(value) => setFormData({ ...formData, email: value })}
             error={errors.email}
+            required
+          />
+
+          <InputField
+            label="Username"
+            placeholder="Choose a username"
+            value={formData.username}
+            onChange={(value) => setFormData({ ...formData, username: value })}
+            error={errors.username}
             required
           />
 
@@ -157,21 +194,6 @@ export function SignupPage() {
           </PrimaryButton>
         </form>
 
-        {/* Divider */}
-        <div className="flex items-center space-x-4">
-          <div className="flex-1 h-px bg-white/10"></div>
-          <span className="text-white/40 text-sm">or</span>
-          <div className="flex-1 h-px bg-white/10"></div>
-        </div>
-
-        {/* Google Button */}
-        <PrimaryButton variant="secondary" onClick={handleGoogleSignup}>
-          <div className="flex items-center justify-center space-x-3">
-            <Chrome size={20} />
-            <span>Continue with Google</span>
-          </div>
-        </PrimaryButton>
-
         {/* Login Link */}
         <div className="text-center">
           <p className="text-white/60">
@@ -183,6 +205,7 @@ export function SignupPage() {
               Login
             </Link>
           </p>
+          <p className="mt-3 text-sm text-white/45">You will be able to sign back in later with either your email or your username.</p>
         </div>
       </motion.div>
     </AuthLayout>

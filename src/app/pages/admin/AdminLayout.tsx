@@ -1,44 +1,37 @@
-import { useEffect, useState } from "react";
-import { useNavigate, Outlet, NavLink } from "react-router";
-import {
-  LayoutDashboard,
-  Users,
-  LogOut,
-  Shield,
-  Menu,
-} from "lucide-react";
+import { useState } from 'react';
+import { NavLink, Outlet, useNavigate } from 'react-router';
+import { FileSearch, LayoutDashboard, LogOut, Menu, Quote, Shield, Users } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 
 const navItems = [
-  { to: "/admin", label: "Overview", icon: LayoutDashboard, end: true },
-  { to: "/admin/users", label: "Users", icon: Users, end: false },
+  { to: '/admin', label: 'Overview', icon: LayoutDashboard, end: true },
+  { to: '/admin/users', label: 'Users', icon: Users, end: false },
+  { to: '/admin/quotes', label: 'Quotes', icon: Quote, end: false },
+  { to: '/admin/audit', label: 'Audit', icon: FileSearch, end: false },
 ];
 
 export function AdminLayout() {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  useEffect(() => {
-    if (!sessionStorage.getItem("admin_auth")) {
-      navigate("/admin/login");
-    }
-  }, [navigate]);
-
-  const handleLogout = () => {
-    sessionStorage.removeItem("admin_auth");
-    navigate("/admin/login");
+  const handleLogout = async () => {
+    await logout();
+    navigate('/admin/login');
   };
 
   const Sidebar = () => (
     <aside className="flex flex-col h-full bg-[#1a1d27] border-r border-white/10 w-56">
-      {/* Logo */}
       <div className="flex items-center gap-2.5 px-5 py-5 border-b border-white/10">
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shrink-0">
           <Shield className="w-4 h-4 text-white" />
         </div>
-        <span className="text-white text-sm">Admin Panel</span>
+        <div>
+          <div className="text-white text-sm">Admin Panel</div>
+          <div className="text-[11px] text-gray-500">{user?.fullName ?? 'Administrator'}</div>
+        </div>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1">
         {navItems.map(({ to, label, icon: Icon, end }) => (
           <NavLink
@@ -49,8 +42,8 @@ export function AdminLayout() {
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
                 isActive
-                  ? "bg-blue-600/20 text-blue-400 border border-blue-500/20"
-                  : "text-gray-400 hover:text-white hover:bg-white/5"
+                  ? 'bg-blue-600/20 text-blue-400 border border-blue-500/20'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`
             }
           >
@@ -60,10 +53,11 @@ export function AdminLayout() {
         ))}
       </nav>
 
-      {/* Logout */}
       <div className="px-3 py-4 border-t border-white/10">
         <button
-          onClick={handleLogout}
+          onClick={() => {
+            void handleLogout();
+          }}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-all w-full"
         >
           <LogOut className="w-4 h-4 shrink-0" />
@@ -75,24 +69,20 @@ export function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-[#0f1117] flex">
-      {/* Desktop Sidebar */}
       <div className="hidden md:flex flex-col h-screen sticky top-0">
         <Sidebar />
       </div>
 
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
+      {sidebarOpen ? (
         <div className="fixed inset-0 z-40 flex md:hidden">
           <div className="absolute inset-0 bg-black/60" onClick={() => setSidebarOpen(false)} />
           <div className="relative z-50 h-full">
             <Sidebar />
           </div>
         </div>
-      )}
+      ) : null}
 
-      {/* Main */}
       <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
-        {/* Top bar (mobile) */}
         <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-white/10 bg-[#1a1d27]">
           <button onClick={() => setSidebarOpen(true)} className="text-gray-400 hover:text-white">
             <Menu className="w-5 h-5" />

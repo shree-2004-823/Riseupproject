@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { StepGoals } from '../components/onboarding/StepGoals';
@@ -7,6 +7,8 @@ import { StepRoutine } from '../components/onboarding/StepRoutine';
 import { StepCoach } from '../components/onboarding/StepCoach';
 import { StepSummary } from '../components/onboarding/StepSummary';
 import { ProgressBar } from '../components/onboarding/ProgressBar';
+import { apiFetch, ApiError } from '@/lib/api';
+import { useAuth } from '@/lib/auth-context';
 
 export interface OnboardingData {
   goals: string[];
@@ -23,6 +25,7 @@ export interface OnboardingData {
 
 export function OnboardingFlow() {
   const navigate = useNavigate();
+  const { user, setUser } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [data, setData] = useState<OnboardingData>({
     goals: [],
@@ -36,8 +39,34 @@ export function OnboardingFlow() {
     },
     coachPersonality: '',
   });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [serverError, setServerError] = useState('');
 
   const totalSteps = 5;
+
+  useEffect(() => {
+    let ignore = false;
+
+    void apiFetch<OnboardingData>('/onboarding')
+      .then((response) => {
+        if (!ignore && response.goals.length > 0) {
+          setData(response);
+        }
+      })
+      .catch(() => {
+        // Fresh users won't have onboarding data yet.
+      })
+      .finally(() => {
+        if (!ignore) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
@@ -51,11 +80,30 @@ export function OnboardingFlow() {
     }
   };
 
-  const handleComplete = () => {
-    // Save onboarding data
-    console.log('Onboarding completed:', data);
-    // Navigate to dashboard
-    navigate('/dashboard');
+  const handleComplete = async () => {
+    setServerError('');
+    setSaving(true);
+
+    try {
+      await apiFetch('/onboarding', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+
+      if (user) {
+        setUser({ ...user, onboardingCompleted: true });
+      }
+
+      navigate('/dashboard');
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setServerError(error.message);
+      } else {
+        setServerError('Unable to save your onboarding right now');
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
   const updateData = (updates: Partial<OnboardingData>) => {
@@ -84,6 +132,15 @@ export function OnboardingFlow() {
 
         {/* Step Content */}
         <div className="max-w-4xl mx-auto px-4 py-12">
+          {serverError && (
+            <div className="mb-6 rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-4 text-sm text-red-200">
+              {serverError}
+            </div>
+          )}
+
+          {loading ? (
+            <div className="text-center text-white/70 py-20">Loading your onboarding...</div>
+          ) : (
           <AnimatePresence mode="wait">
             {currentStep === 1 && (
               <StepGoals
@@ -127,11 +184,12 @@ export function OnboardingFlow() {
               <StepSummary
                 key="summary"
                 data={data}
-                onComplete={handleComplete}
+                onComplete={saving ? () => {} : handleComplete}
                 onBack={handleBack}
               />
             )}
           </AnimatePresence>
+          )}
         </div>
       </div>
     </div>

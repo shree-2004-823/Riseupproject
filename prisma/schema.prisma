@@ -1,0 +1,498 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum HabitCategory {
+  PHYSICAL
+  MENTAL
+  EMOTIONAL
+  DISCIPLINE
+  RECOVERY
+}
+
+enum HabitDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum HabitSource {
+  ONBOARDING
+  MANUAL
+}
+
+enum MoodLabel {
+  HAPPY
+  CALM
+  MOTIVATED
+  NEUTRAL
+  TIRED
+  STRESSED
+  ANXIOUS
+  SAD
+  FRUSTRATED
+  OVERWHELMED
+}
+
+enum CravingOutcome {
+  RESISTED
+  RELAPSED
+  SUPPORT_REQUESTED
+}
+
+enum PlannerMode {
+  NORMAL
+  LOW_ENERGY
+  RECOVERY
+}
+
+enum PlannerPeriod {
+  MORNING
+  AFTERNOON
+  EVENING
+  NIGHT
+}
+
+enum TaskStatus {
+  PENDING
+  COMPLETED
+}
+
+enum EnergyLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum QuoteCategory {
+  MOTIVATION
+  DISCIPLINE
+  CALM
+  RECOVERY
+  COMEBACK
+  FOCUS
+}
+
+enum ReminderEventStatus {
+  GENERATED
+  SENT
+  ACTED_ON
+  DISMISSED
+  MISSED
+  SKIPPED
+}
+
+enum JournalEntryType {
+  GENERAL
+  GRATITUDE
+  RELAPSE_REFLECTION
+  HARD_DAY
+  CHECK_IN
+}
+
+enum ChallengeType {
+  NO_SMOKING
+  WORKOUT
+  HYDRATION
+  MOOD_CHECKIN
+  JOURNAL
+  RECOVERY
+}
+
+enum ChallengeParticipantStatus {
+  ACTIVE
+  COMPLETED
+  ABANDONED
+  EXPIRED
+}
+
+enum CoachMessageRole {
+  USER
+  ASSISTANT
+}
+
+enum CoachProvider {
+  GEMINI
+  LOCAL
+}
+
+model User {
+  id                  String   @id @default(cuid())
+  fullName            String
+  email               String   @unique
+  username            String?  @unique
+  usernameLower       String?  @unique
+  phoneNumber         String?
+  phoneNumberE164     String?  @unique
+  phoneVerifiedAt     DateTime?
+  smsMarketingOptIn   Boolean  @default(false)
+  smsRemindersOptIn   Boolean  @default(false)
+  passwordHash        String
+  role                UserRole @default(USER)
+  onboardingCompleted Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  profile               UserProfile?
+  habits                Habit[]
+  habitLogs             HabitLog[]
+  moodLogs              MoodLog[]
+  cravingLogs           CravingLog[]
+  dailyPlans            DailyPlan[]
+  journalEntries        JournalEntry[]
+  reminderSchedules     ReminderSchedule[]
+  reminderEvents        ReminderEvent[]
+  challengeParticipants ChallengeParticipant[]
+  quitProfile           QuitProfile?
+  relapseEvents         RelapseEvent[]
+  urgeInterventions     UrgeIntervention[]
+  adminAuditLogs        AdminAuditLog[]
+  coachConversations    CoachConversation[]
+}
+
+model UserProfile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  goals        String?
+  aiStyle      String?
+  wakeTime     String?
+  sleepTime    String?
+  workoutTime  String?
+  reminderTime String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Habit {
+  id              String          @id @default(cuid())
+  userId          String
+  name            String
+  category        HabitCategory
+  countsAsWorkout Boolean         @default(false)
+  frequency       String?
+  reminderTime    String?
+  fallbackTask    String?
+  scheduledTime   String?
+  difficulty      HabitDifficulty @default(MEDIUM)
+  source          HabitSource     @default(MANUAL)
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs              HabitLog[]
+  reminderSchedules ReminderSchedule[]
+  reminderEvents    ReminderEvent[]
+
+  @@index([userId, isActive])
+}
+
+model HabitLog {
+  id          String    @id @default(cuid())
+  userId      String
+  habitId     String
+  dateKey     String
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  habit Habit @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  @@unique([habitId, dateKey])
+  @@index([userId, dateKey])
+}
+
+model MoodLog {
+  id         String    @id @default(cuid())
+  userId     String
+  date       DateTime  @default(now())
+  moodLabel  MoodLabel
+  energy     Int?
+  stress     Int?
+  confidence Int?
+  anxiety    Int?
+  motivation Int?
+  focus      Int?
+  note       String?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+}
+
+model CravingLog {
+  id         String         @id @default(cuid())
+  userId     String
+  habitType  String
+  trigger    String?
+  intensity  Int?
+  outcome    CravingOutcome @default(RESISTED)
+  notes      String?
+  occurredAt DateTime       @default(now())
+  createdAt  DateTime       @default(now())
+
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  relapseEvent      RelapseEvent?
+  urgeInterventions UrgeIntervention[]
+
+  @@index([userId, occurredAt])
+}
+
+model DailyPlan {
+  id        String      @id @default(cuid())
+  userId    String
+  dateKey   String
+  mode      PlannerMode @default(NORMAL)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  user  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items DailyPlanItem[]
+
+  @@unique([userId, dateKey])
+}
+
+model DailyPlanItem {
+  id                     String        @id @default(cuid())
+  planId                 String
+  title                  String
+  category               String?
+  priority               String?
+  status                 TaskStatus    @default(PENDING)
+  period                 PlannerPeriod
+  energyLevel            EnergyLevel   @default(MEDIUM)
+  scheduledTime          String?
+  fallbackTask           String?
+  carriedFromDateKey     String?
+  wasRescheduled         Boolean       @default(false)
+  rolloverCount          Int           @default(0)
+  completedAfterRollover Boolean       @default(false)
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+
+  plan           DailyPlan       @relation(fields: [planId], references: [id], onDelete: Cascade)
+  reminderEvents ReminderEvent[]
+
+  @@index([planId, period])
+}
+
+model JournalEntry {
+  id         String           @id @default(cuid())
+  userId     String
+  title      String?
+  content    String
+  emotionTag String?
+  entryType  JournalEntryType @default(GENERAL)
+  aiSummary  String?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ReminderSchedule {
+  id        String   @id @default(cuid())
+  userId    String
+  habitId   String?
+  type      String
+  title     String
+  message   String?
+  time      String
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  habit  Habit?          @relation(fields: [habitId], references: [id], onDelete: SetNull)
+  events ReminderEvent[]
+
+  @@index([userId, enabled])
+  @@index([habitId])
+}
+
+model ReminderEvent {
+  id           String              @id @default(cuid())
+  externalKey  String?             @unique
+  userId       String
+  scheduleId   String?
+  habitId      String?
+  planItemId   String?
+  type         String
+  status       ReminderEventStatus @default(GENERATED)
+  scheduledFor DateTime
+  sentAt       DateTime?
+  actedAt      DateTime?
+  dismissedAt  DateTime?
+  metadata     String?
+  createdAt    DateTime            @default(now())
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schedule ReminderSchedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+  habit    Habit?            @relation(fields: [habitId], references: [id], onDelete: SetNull)
+  planItem DailyPlanItem?    @relation(fields: [planItemId], references: [id], onDelete: SetNull)
+
+  @@index([userId, scheduledFor])
+  @@index([status, scheduledFor])
+}
+
+model Quote {
+  id        String        @id @default(cuid())
+  content   String
+  author    String?
+  category  QuoteCategory
+  isActive  Boolean       @default(true)
+  sortOrder Int           @default(0)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model Challenge {
+  id              String          @id @default(cuid())
+  title           String          @unique
+  description     String
+  type            ChallengeType
+  durationDays    Int
+  difficulty      HabitDifficulty @default(MEDIUM)
+  rewardBadgeText String?
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  participants ChallengeParticipant[]
+
+  @@index([type, isActive])
+}
+
+model ChallengeParticipant {
+  id                           String                     @id @default(cuid())
+  challengeId                  String
+  userId                       String
+  joinedAt                     DateTime                   @default(now())
+  status                       ChallengeParticipantStatus @default(ACTIVE)
+  lastProgressAt               DateTime?
+  completedDaysSnapshot        Int                        @default(0)
+  completionPercentageSnapshot Int                        @default(0)
+  completedAt                  DateTime?
+  abandonedAt                  DateTime?
+  createdAt                    DateTime                   @default(now())
+  updatedAt                    DateTime                   @updatedAt
+
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([challengeId, userId])
+  @@index([userId, joinedAt])
+}
+
+model QuitProfile {
+  id                     String    @id @default(cuid())
+  userId                 String    @unique
+  primaryHabitType       String    @default("smoking")
+  reasonsToQuit          String?
+  quitStartedAt          DateTime?
+  currentStreakStartedAt DateTime?
+  lastRelapseAt          DateTime?
+  longestStreakDays      Int       @default(0)
+  emergencySupportUses   Int       @default(0)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  relapseEvents     RelapseEvent[]
+  urgeInterventions UrgeIntervention[]
+}
+
+model RelapseEvent {
+  id            String   @id @default(cuid())
+  userId        String
+  quitProfileId String?
+  cravingLogId  String?  @unique
+  habitType     String
+  trigger       String?
+  intensity     Int?
+  notes         String?
+  occurredAt    DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quitProfile QuitProfile? @relation(fields: [quitProfileId], references: [id], onDelete: SetNull)
+  cravingLog  CravingLog?  @relation(fields: [cravingLogId], references: [id], onDelete: SetNull)
+
+  @@index([userId, occurredAt])
+  @@index([habitType, occurredAt])
+}
+
+model UrgeIntervention {
+  id               String   @id @default(cuid())
+  userId           String
+  quitProfileId    String?
+  cravingLogId     String?
+  interventionType String
+  source           String?
+  outcome          String?
+  usedAt           DateTime @default(now())
+  createdAt        DateTime @default(now())
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quitProfile QuitProfile? @relation(fields: [quitProfileId], references: [id], onDelete: SetNull)
+  cravingLog  CravingLog?  @relation(fields: [cravingLogId], references: [id], onDelete: SetNull)
+
+  @@index([userId, usedAt])
+  @@index([interventionType, usedAt])
+}
+
+model AdminAuditLog {
+  id        String   @id @default(cuid())
+  adminId   String
+  action    String
+  status    String
+  details   String?
+  createdAt DateTime @default(now())
+
+  admin User @relation(fields: [adminId], references: [id], onDelete: Cascade)
+}
+
+model CoachConversation {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages CoachMessage[]
+
+  @@index([userId, updatedAt])
+  @@index([userId, isActive, updatedAt])
+}
+
+model CoachMessage {
+  id             String           @id @default(cuid())
+  conversationId String
+  role           CoachMessageRole
+  provider       CoachProvider?
+  content        String
+  createdAt      DateTime         @default(now())
+
+  conversation CoachConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+}

@@ -11,17 +11,27 @@ import {
   Settings,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
+import { useAuth } from '@/lib/auth-context';
 
 export function TopHeader() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const currentDate = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
   });
+
+  const initials = user?.fullName
+    ? user.fullName
+        .split(' ')
+        .map((part) => part[0]?.toUpperCase() ?? '')
+        .join('')
+        .slice(0, 2)
+    : 'U';
 
   return (
     <header className="sticky top-0 h-16 bg-zinc-900/80 backdrop-blur-xl border-b border-white/10 z-30">
@@ -112,7 +122,7 @@ export function TopHeader() {
               className="flex items-center space-x-2 p-1.5 pr-3 rounded-lg hover:bg-white/5 transition-colors"
             >
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center">
-                <span className="text-sm font-semibold">S</span>
+                <span className="text-sm font-semibold">{initials}</span>
               </div>
               <ChevronDown
                 size={16}
@@ -131,8 +141,8 @@ export function TopHeader() {
                   className="absolute right-0 top-12 w-56 bg-zinc-900 border border-white/10 rounded-xl shadow-xl overflow-hidden"
                 >
                   <div className="p-3 border-b border-white/10">
-                    <p className="font-semibold">Shree Kumar</p>
-                    <p className="text-sm text-white/60">shree@example.com</p>
+                    <p className="font-semibold">{user?.fullName ?? 'RiseUp User'}</p>
+                    <p className="text-sm text-white/60">{user?.email ?? 'user@example.com'}</p>
                   </div>
                   <div className="p-2">
                     <Link
@@ -150,7 +160,10 @@ export function TopHeader() {
                       <span className="text-sm">Settings</span>
                     </Link>
                     <button
-                      onClick={() => navigate('/login')}
+                      onClick={async () => {
+                        await logout();
+                        navigate('/login');
+                      }}
                       className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors text-red-400"
                     >
                       <LogOut size={18} />

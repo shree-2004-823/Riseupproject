@@ -5,32 +5,29 @@ import { AuthLayout } from '../components/auth/AuthLayout';
 import { FloatingWidgets } from '../components/auth/FloatingWidgets';
 import { InputField } from '../components/auth/InputField';
 import { PrimaryButton } from '../components/auth/PrimaryButton';
-import { Chrome, Home } from 'lucide-react';
+import { Home } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
+import { ApiError } from '@/lib/api';
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
-    email: '',
+    identifier: '',
     password: '',
-    rememberMe: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
-
-  const validateEmail = (email: string) => {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-  };
+  const [serverError, setServerError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setServerError('');
 
     const newErrors: Record<string, string> = {};
 
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
+    if (!formData.identifier.trim()) {
+      newErrors.identifier = 'Email or username is required';
     }
 
     if (!formData.password) {
@@ -43,25 +40,25 @@ export function LoginPage() {
 
     setLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      // Check if user has completed onboarding (mock)
-      const hasCompletedOnboarding = Math.random() > 0.5;
-      
-      if (hasCompletedOnboarding) {
-        navigate('/dashboard');
+    try {
+      const user = await login({
+        identifier: formData.identifier,
+        password: formData.password,
+      });
+
+      navigate(user.onboardingCompleted ? '/dashboard' : '/onboarding');
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setServerError(error.message);
       } else {
-        navigate('/onboarding');
+        setServerError('Unable to log in right now');
       }
-    }, 1500);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleGoogleLogin = () => {
-    console.log('Google login clicked');
-  };
-
-  const isFormValid = formData.email.trim() && formData.password;
+  const isFormValid = formData.identifier.trim() && formData.password;
 
   return (
     <AuthLayout leftPanel={<FloatingWidgets />}>
@@ -90,13 +87,18 @@ export function LoginPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
+          {serverError && (
+            <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+              {serverError}
+            </div>
+          )}
+
           <InputField
-            label="Email"
-            type="email"
-            placeholder="Enter your email"
-            value={formData.email}
-            onChange={(value) => setFormData({ ...formData, email: value })}
-            error={errors.email}
+            label="Email or Username"
+            placeholder="Enter your email or username"
+            value={formData.identifier}
+            onChange={(value) => setFormData({ ...formData, identifier: value })}
+            error={errors.identifier}
             required
           />
 
@@ -110,24 +112,8 @@ export function LoginPage() {
               error={errors.password}
               required
             />
-            <div className="flex items-center justify-between mt-3">
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.rememberMe}
-                  onChange={(e) =>
-                    setFormData({ ...formData, rememberMe: e.target.checked })
-                  }
-                  className="w-4 h-4 rounded border-white/20 bg-zinc-900/50 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0"
-                />
-                <span className="text-sm text-white/60">Remember me</span>
-              </label>
-              <Link
-                to="/forgot-password"
-                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-              >
-                Forgot password?
-              </Link>
+            <div className="mt-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/65">
+              Sign in with either your email or your username. Once you are in, you can change your password from Settings.
             </div>
           </div>
 
@@ -139,21 +125,6 @@ export function LoginPage() {
             Login
           </PrimaryButton>
         </form>
-
-        {/* Divider */}
-        <div className="flex items-center space-x-4">
-          <div className="flex-1 h-px bg-white/10"></div>
-          <span className="text-white/40 text-sm">or</span>
-          <div className="flex-1 h-px bg-white/10"></div>
-        </div>
-
-        {/* Google Button */}
-        <PrimaryButton variant="secondary" onClick={handleGoogleLogin}>
-          <div className="flex items-center justify-center space-x-3">
-            <Chrome size={20} />
-            <span>Continue with Google</span>
-          </div>
-        </PrimaryButton>
 
         {/* Signup Link */}
         <div className="text-center">
