@@ -11,7 +11,9 @@ RiseUp is a Vite + React frontend with an Express + Prisma backend for habit tra
 - Direct OpenAI or Gemini-backed coaching with safe local fallback
 - TypeScript on both client and server
 
-## Local setup
+## Run instructions
+
+### First-time setup
 
 1. Install dependencies:
 
@@ -19,7 +21,15 @@ RiseUp is a Vite + React frontend with an Express + Prisma backend for habit tra
    npm install
    ```
 
-2. Copy the example environment file and update the values:
+2. Create a local environment file from `.env.example`.
+
+   PowerShell:
+
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+
+   macOS or Linux:
 
    ```bash
    cp .env.example .env
@@ -54,6 +64,24 @@ RiseUp is a Vite + React frontend with an Express + Prisma backend for habit tra
    ```
 
 Frontend runs on `http://localhost:5173` and the API runs on `http://localhost:4000` by default.
+
+### Daily local run
+
+If setup is already done, you usually only need:
+
+```bash
+npm install
+npm run dev
+```
+
+### Production-style run
+
+To build and run the compiled app locally:
+
+```bash
+npm run build
+npm start
+```
 
 ## Useful scripts
 
